@@ -19,11 +19,11 @@ echo CLI args: $DOTNET_BUILD_ARGS
 
 echo Restoring
 
-dotnet restore -v Warning
+dotnet restore
 
 echo Building
 
-dotnet build $DOTNET_BUILD_ARGS **/project.json
+dotnet build $DOTNET_BUILD_ARGS
 
 echo Testing
 
@@ -37,9 +37,11 @@ do
   # We need to get the name of the project, to know what include in the OpenCover filter, so we have to extract the "Hystrix.Dotnet" part from the path string.
   project=`echo $testdir | cut -d/ -f2 | sed -e 's/\(\.UnitTests\)*$//g'`
 
+  dirname=$(basename "$testdir")
+  projectFile=$(find ${testdir}/${dirname}.*proj)
+
   echo "Executing unit tests in $testdir"
-  #dotnet test -f netcoreapp1.0 $DOTNET_TEST_ARGS $testdir
-  dotnet test $DOTNET_TEST_ARGS $testdir
+  dotnet test $DOTNET_TEST_ARGS --no-build $projectFile
 
   if [ "$project" = "Hystrix.Dotnet.AspNet" ]; then
 	seachdirs=$testdir/bin/$CONFIG/net451
@@ -50,7 +52,7 @@ do
   echo "Calculating coverage with OpenCover for $project"
   $OPENCOVER \
     -target:"c:\Program Files\dotnet\dotnet.exe" \
-    -targetargs:"test $DOTNET_TEST_ARGS $testdir" \
+    -targetargs:"test $DOTNET_TEST_ARGS --no-build $projectFile" \
     -mergeoutput \
     -hideskipped:File \
     -output:$coverage/coverage.xml \
